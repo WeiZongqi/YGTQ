@@ -15,7 +15,9 @@ def data_preprocessing(df, DROP_THRESHOLD=None, mean_recond=None, by_category=Fa
 		# 识别工具变量
 		tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
 		categorical_columns = filter(lambda x: re.match(tool_mark, x), df.columns)
-		return categorical_columns
+		#return categorical_columns
+		return ['TOOL','Tool','TOOL_ID','Tool (#1)','TOOL (#1)','TOOL (#2)','Tool (#2)','Tool (#3)','Tool (#4)','OPERATION_ID',
+		        'Tool (#5)','TOOL (#3)']
 
 	def __identify_date(df):
 		# 识别日期变量
@@ -102,6 +104,7 @@ def data_preprocessing(df, DROP_THRESHOLD=None, mean_recond=None, by_category=Fa
 				partial_df = partial_df.groupby(category).apply(lambda x: x.fillna(x.median())).reset_index(level=0, drop=True)
 				# 如果一个特征在工具变量的某个取值下全部为缺失值，丢弃该特征
 				partial_df = partial_df.dropna(axis=1, how='any')
+				#partial_df = partial_df.fillna(0)
 				if augment:
 					# 相邻两个特征的差作为新的特征
 					partial_df = pd.concat([partial_df[category], _data_augmentation(partial_df.iloc[:, 1:])], axis=1)
@@ -132,27 +135,43 @@ def data_preprocessing(df, DROP_THRESHOLD=None, mean_recond=None, by_category=Fa
 
 def data_split(data,mode=None,DROP_THRESHOLD=None,by_category=False,redundancy_process=False, check=False,
                        zero_equal_na=False, augment=False, remove_correlation=False):
+
+	def _data_duplicate_process(data):
+		# 同样index的数据在第二条记录加上后缀
+		data['temp_id'] = data.index
+		data.index = map(lambda x, y: x + '_new' if y else x, data.index, data.duplicated(subset='temp_id'))
+		data['temp_id'] = data.index
+		assert data.duplicated(subset='temp_id').sum() == 0
+		data.drop(labels=['temp_id'], axis=1, inplace=True)
+		return data
+
 	# Train data and test data split
 	assert mode in ['online','offline']
 	print 'Data spliting... in %s mode' %mode
 
 	if mode == 'offline':
 		# 线下测试
-		test_data = pd.read_csv('test_A.csv', index_col=0)
-		test_score = pd.read_csv('test_A_score.csv',index_col=0,header=None)
-		train_score = data.Y
-		train_data = data.drop(labels='Y', axis=1)
-		assert train_data.shape[1] == test_data.shape[1]
-		assert test_data.shape[0] == len(test_score)
+		SPLIT_PTG = 0.2
+		import random
+		random.seed(49)
+		index = range(data.shape[0])
+		random.shuffle(index)
+
 
 		# 训练数据和测试数据共同预处理，之后再分离
-		full_data = pd.concat([train_data, test_data], axis=0)
-		full_data = data_preprocessing(full_data, DROP_THRESHOLD=DROP_THRESHOLD, redundancy_process=redundancy_process, by_category=by_category,
+		data = _data_duplicate_process(data)
+		data = data_preprocessing(data, DROP_THRESHOLD=DROP_THRESHOLD, redundancy_process=redundancy_process, by_category=by_category,
 		                          zero_equal_na=zero_equal_na, augment=augment, remove_correlation=remove_correlation, check=check)
 
-		test_data = full_data.loc[test_data.index,:]
-		train_data = full_data.loc[train_data.index,:]
+		test_data = data.iloc[index[:int(SPLIT_PTG * data.shape[0])]]
+		test_score = test_data.Value
+		test_data = test_data.drop(labels='Value', axis=1)
 
+		train_data = data.iloc[index[int(SPLIT_PTG * data.shape[0]):]]
+		train_score = train_data.Value
+		train_data = train_data.drop(labels='Value', axis=1)
+
+		assert train_data.shape[1] == test_data.shape[1]
 		print train_data.shape, test_data.shape
 
 		if check:
@@ -163,10 +182,12 @@ def data_split(data,mode=None,DROP_THRESHOLD=None,by_category=False,redundancy_p
 
 	elif mode == 'online':
 		# 线上测试
-		train_score = pd.concat([data.Y, pd.read_csv('test_A_score.csv',index_col=0,header=None,names=['Y']).Y])
-		train_data = pd.concat([data.drop(labels='Y', axis=1),pd.read_csv('test_A.csv', index_col=0)], axis=0)
+		data = _data_duplicate_process(data)
+		train_score = data.Value
+		train_data = data.drop(labels='Value', axis=1)
 
-		test_data = pd.read_csv('final_test_B.csv', index_col=0)
+		test_data = pd.read_csv('test_A_20180117.csv', index_col=0, header=0)
+		test_data = _data_duplicate_process(test_data)
 		assert train_data.shape[1] == test_data.shape[1]
 		assert train_data.shape[0] == len(train_score)
 
@@ -208,10 +229,8 @@ if __name__ == '__main__':
 	CHECK = False
 
 	# 训练数据的读入以及异常处理
-	data = pd.read_csv('train_data.csv', index_col=0, header=0)
-	data['temp_id'] = data.index
-	data = data.drop_duplicates(['temp_id']).drop(labels=['temp_id'], axis=1)
-	data.loc['ID452', '210X27'] = 0.004
+	data = pd.read_csv('train_20180117.csv', index_col=0, header=0)
+
 
 	# 线下测试
 	train_data, train_score, test_data, test_score = data_split(data, mode='offline', DROP_THRESHOLD=DROP_THRESHOLD,
