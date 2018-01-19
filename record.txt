@@ -1,0 +1,5 @@
+1.18
+尝试的模型：Lasso Regressor
+参数：max_z_score=2, max_discrete_score=2.5, discrete_weight=5, auxiliary_data=None, mean_threshold=0.01
+
+测试集成绩：MSE 0.03653，排名28。小汤包期末加油啦～

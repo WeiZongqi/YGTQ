@@ -9,32 +9,41 @@ def __identify_categorical_variable(df):
 	return categorical_columns
 
 
+def column_mapping(data):
 
-def sql_create_table(odps, data, table_name):
-	project = odps.get_project()
-
-	if 'Chamber ID' in data.columns:	data.rename(columns={'Chamber ID' : 'Chamber_ID'}, inplace= True)
 	categorical_columns = __identify_categorical_variable(data)
-	if 'Chamber_ID' in categorical_columns: categorical_columns.remove('Chamber_ID')
+	try:
+		categorical_columns.remove('Value')
+	except:
+		pass
 
-	import re
 	j = 1
 	t = 1
+	mapping_dict = {}
+
 	for i in range(len(categorical_columns)):
+		if re.match('ERROR', categorical_columns[i]) or re.match('Chamber',categorical_columns[i]):
+			data.rename(columns={categorical_columns[i]: 'B_' + str(j)}, inplace=True)
+			mapping_dict[categorical_columns[i]] = 'B_' + str(j)
+			j = j + 1
+		else:
+			data.rename(columns={categorical_columns[i]: 'TOOL_' + str(t)}, inplace=True)
+			mapping_dict[categorical_columns[i]] = 'TOOL_' + str(t)
+			t = t + 1
 
-		if re.match('ERROR',categorical_columns[i]):
-			data.rename(columns={categorical_columns[i]:'B_'+str(j)}, inplace = True)
-			j = j+1
+	data.columns = map(lambda x: 'A_'+x.replace(" ","") if re.match(r'\d.*',x) else x, data.columns)
 
-		if re.match('TOOL',categorical_columns[i]) or re.match('Tool',categorical_columns[i]):
-			data.rename(columns={categorical_columns[i]:'TOOL_'+str(t)}, inplace = True)
-			t = t+1
-			
+	return data
+
+def sql_create_table(odps, data, table_name):
+
+	project = odps.get_project()
 
 	string = ''
 	for col in data.columns:
 		#string = string + col_df.loc[i,'col_name'] + ' ' + col_df.loc[i,'type'] + ', '
-		string = string + 'A_'+ col + ' ' + 'double' + ', '
+		assert ' ' not in col
+		string = string + col + ' ' + 'double' + ', '
 	string = string[:-2]
 
 	odps.delete_table(table_name, if_exists=True)
@@ -62,8 +71,13 @@ if __name__ == '__main__':
 	odps = ODPS('LTAIYQbRZMzJSs1V', 'DUHOB76E6mK4mm14o3NH2fD0r7im7y', 'YGTQ',
 	            endpoint='http://service.odps.aliyun.com/api')
 
-
-	print(train_data.shape)
+	print train_data.shape
+	train_data = column_mapping(train_data)
 	upload_table(odps, train_data,'train_data_')
+
+	print test_data.shape
+	test_data = column_mapping(test_data)
+	assert  (test_data.columns != train_data.columns[:-1]).sum() == 0
+	upload_table(odps,test_data,'test_data_')
 
 
