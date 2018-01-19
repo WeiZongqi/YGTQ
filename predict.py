@@ -23,4 +23,5 @@ pred_score = regressor_predict(regressor, data, scaler)
 print 'Train MSE: %f' %mean_squared_error(train_score, train_pred)
 
 output = pd.Series(pred_score, index=data.index)
-output.to_csv('output_B.csv',header=None)
+output.index = map(lambda x: x.strip('_new'),output.index)
+output.to_csv('output_A.csv',header=None)

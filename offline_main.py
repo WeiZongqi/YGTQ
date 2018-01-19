@@ -8,8 +8,9 @@ import re
 def _identify_categorical_variable(df):
 	tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
 	categorical_columns = filter(lambda x: re.match(tool_mark, str(x)), df.columns)
-	return categorical_columns
-
+	#return categorical_columns
+	return ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
+	 'OPERATION_ID','Tool (#5)', 'TOOL (#3)']
 
 from categorical_processing import *
 full_data = pd.concat([train_data, test_data], axis=0)
@@ -31,13 +32,13 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ShuffleSplit
 
-scaler = YGTQ_Scaler(method='categorical', max_z_score=2.5, discrete_col=new_col_name, discrete_max_z_score=4.5,
-                     discrete_weight=20)
+scaler = YGTQ_Scaler(method='categorical', max_z_score=2, discrete_col=[], discrete_max_z_score=2.5,
+                     discrete_weight=5)
 
 train_data, train_score = scaler.fit_transform(train_data, train_score, auxiliary_data=None, test_data=test_data)
 test_data = scaler.transform(test_data)
 '''
-regressor = LassoCV(normalize=False, alphas=np.arange(0.005,0.016,0.0002),cv=ShuffleSplit(n_splits=20,test_size=0.05),n_jobs=-1)
+regressor = LassoCV(normalize=False, n_alphas=300,cv=ShuffleSplit(n_splits=20,test_size=0.2),n_jobs=-1)
 regressor.fit(train_data, train_score)
 import numpy as np
 estimator = regressor
@@ -48,7 +49,8 @@ chosen_col = train_data.columns[(regressor.coef_!=0)]
 train_data[chosen_col].to_csv('explore/Lasso_train_data.csv')
 test_data[chosen_col].to_csv('explore/Lasso_data.csv')
 '''
-for alpha in np.arange(0.005,0.019,0.001):
+
+for alpha in np.arange(0.001,0.01,0.001):
 	regressor = Lasso(normalize=False, alpha=alpha)
 	regressor.fit(train_data, train_score)
 

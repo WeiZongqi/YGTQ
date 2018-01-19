@@ -7,7 +7,9 @@ from sklearn.decomposition import PCA
 def _identify_categorical_variable(df):
 	tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
 	categorical_columns = filter(lambda x: re.match(tool_mark, str(x)), df.columns)
-	return categorical_columns
+	#return categorical_columns
+	return ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
+	 'OPERATION_ID','Tool (#5)', 'TOOL (#3)']
 
 def _category_normalize(df, category, X_scaler_dict, fit=True, limit=None):
 	assert len(set(df.loc[:,category])) == 1
@@ -93,7 +95,7 @@ class YGTQ_Scaler():
 			discrete_part = combined_data.loc[:,self.discrete_col]
 			discrete_part = pd.DataFrame(self.discrete_col_scaler.fit_transform(discrete_part), columns=discrete_part.columns,
 			                             index=discrete_part.index)
-			discrete_part.to_csv('discrete_data.csv')
+			discrete_part.to_csv('explore/discrete_data.csv')
 			discrete_part = discrete_part * self.disrete_weight
 			discrete_part = discrete_part.apply(lambda x: x.apply(lambda y: self.discrete_max_z_score if y > self.discrete_max_z_score else y),
 				axis=0)
