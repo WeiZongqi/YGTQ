@@ -32,13 +32,13 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ShuffleSplit
 
-scaler = YGTQ_Scaler(method='categorical', max_z_score=2, discrete_col=[], discrete_max_z_score=2.5,
-                     discrete_weight=5)
+scaler = YGTQ_Scaler(method='categorical', max_z_score=3, discrete_col=new_col_name, discrete_max_z_score=2,
+                     discrete_weight=10)
 
 train_data, train_score = scaler.fit_transform(train_data, train_score, auxiliary_data=None, test_data=test_data)
 test_data = scaler.transform(test_data)
-'''
-regressor = LassoCV(normalize=False, n_alphas=300,cv=ShuffleSplit(n_splits=20,test_size=0.2),n_jobs=-1)
+
+regressor = LassoCV(normalize=False, alphas=np.arange(0.0001,0.010,0.0002),cv=ShuffleSplit(n_splits=30,test_size=0.2),n_jobs=-1)
 regressor.fit(train_data, train_score)
 import numpy as np
 estimator = regressor
@@ -48,7 +48,7 @@ print regressor.alpha_, mse.mean(), mse.max(), (estimator.coef_!=0).sum()
 chosen_col = train_data.columns[(regressor.coef_!=0)]
 train_data[chosen_col].to_csv('explore/Lasso_train_data.csv')
 test_data[chosen_col].to_csv('explore/Lasso_data.csv')
-'''
+
 
 for alpha in np.arange(0.001,0.01,0.001):
 	regressor = Lasso(normalize=False, alpha=alpha)

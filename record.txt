@@ -1,5 +1,11 @@
 1.18
 尝试的模型：Lasso Regressor
-参数：max_z_score=2, max_discrete_score=2.5, discrete_weight=5, auxiliary_data=None, mean_threshold=0.01
+参数：max_z_score=2, max_discrete_score=2.5, discrete_weight=5, auxiliary_data=None, mean_threshold=0.01, cv=ShuffleSplit(n_splits=20,test_size=0.2), alphas=np.arange(0.0001,0.010,0.0002)
 
 测试集成绩：MSE 0.03653，排名28。小汤包期末加油啦～
+
+1.19
+尝试的模型：Lasso Regressor
+参数：max_z_score=2, max_discrete_score=2.5, discrete_weight=5, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, cv=ShuffleSplit(n_splits=30,test_size=0.2), alphas=np.arange(0.0001,0.010,0.0002)
+
+测试集成绩：MSE 0.02142，排名1。下面的朋友们慌不慌><其实我也不知道发生了什么。。

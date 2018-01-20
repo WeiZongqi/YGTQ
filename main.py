@@ -30,7 +30,7 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.linear_model import LassoCV
 import numpy as np
 
-regressor = LassoCV(normalize=False, n_jobs=-1, alphas=np.arange(0.0001,0.010,0.0002), cv=ShuffleSplit(n_splits=20,test_size=0.2))
+regressor = LassoCV(normalize=False, n_jobs=-1, alphas=np.arange(0.0001,0.010,0.0002), cv=ShuffleSplit(n_splits=30,test_size=0.2))
 
 regressor, scaler = regressor_train(regressor, train_data, train_score, auxiliary_data=None, test_data=test_data,
                                     normalize='categorical', discrete_col=new_col_name, max_z_score=2, discrete_max_z_score=2.5,

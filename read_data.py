@@ -9,7 +9,7 @@ def data_preprocessing(df, DROP_THRESHOLD=None, mean_recond=None, by_category=Fa
 	# 目前在by_category选项下不支持训练集和测试集分开填充缺失值
 	assert mean_recond is None if by_category else True
 	# 识别0为异常值的函数待改进
-	assert not zero_equal_na
+	#assert not zero_equal_na
 
 	def __identify_categorical_variable(df):
 		# 识别工具变量
@@ -31,7 +31,7 @@ def data_preprocessing(df, DROP_THRESHOLD=None, mean_recond=None, by_category=Fa
 				pass
 		return date_column_drop
 
-	def __create_nan(df, median_thd=2):
+	def __create_nan(df, median_thd=0.2):
 		# 0是某一列的最大或最小值，并且该维度的中位数超过一定的阈值，替换为缺失值
 		import numpy as np
 		lower_bool = df.apply(lambda x: x.min() == 0 and x.median() > median_thd)
@@ -223,15 +223,15 @@ if __name__ == '__main__':
 	DROP_THRESHOLD = 0.95
 	REDUNDANCY_PROCESS = True
 	BY_CATEGORY = True
-	ZERO_EQUAL_NA = False
+	ZERO_EQUAL_NA = True
 	AUGMENT = False
 	REMOVE_CORRELATION = False
-	CHECK = False
+	CHECK = True
 
 	# 训练数据的读入以及异常处理
 	data = pd.read_csv('train_20180117.csv', index_col=0, header=0)
 
-
+	'''
 	# 线下测试
 	train_data, train_score, test_data, test_score = data_split(data, mode='offline', DROP_THRESHOLD=DROP_THRESHOLD,
 	                                                            redundancy_process=REDUNDANCY_PROCESS,
@@ -248,4 +248,4 @@ if __name__ == '__main__':
 	                                                check=CHECK)
 	import cPickle
 	cPickle.dump((train_data, train_score, test_data), open('online_data.pkl', 'w'))
-	'''
+
